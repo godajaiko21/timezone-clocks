@@ -1,6 +1,5 @@
 # Timezone Clocks
 
-[![CI](https://github.com/godajaiko21/timezone-clocks/actions/workflows/ci.yml/badge.svg)](https://github.com/godajaiko21/timezone-clocks/actions/workflows/ci.yml)
 [![Deploy](https://github.com/godajaiko21/timezone-clocks/actions/workflows/deploy.yml/badge.svg)](https://github.com/godajaiko21/timezone-clocks/actions/workflows/deploy.yml)
 [![CodeQL](https://github.com/godajaiko21/timezone-clocks/actions/workflows/codeql.yml/badge.svg)](https://github.com/godajaiko21/timezone-clocks/actions/workflows/codeql.yml)
 
