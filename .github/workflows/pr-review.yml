@@ -1,0 +1,21 @@
+name: PR Review
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Validate HTML
+      run: |
+        npx html-validator-cli ./src/*.html
+
+    - name: Check file size
+      run: |
+        find . -type f -size +1M | while read file; do
+          echo "Warning: $file is larger than 1MB"
+        done

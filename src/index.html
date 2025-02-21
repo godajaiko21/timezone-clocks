@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Timezone Clocks</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="assets/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
+    <link rel="shortcut icon" href="assets/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png" />
+    <link rel="manifest" href="assets/site.webmanifest" />
+
+    <!-- External Stylesheets -->
+    <link rel="stylesheet" href="css/styles.css">
+
+    <!-- Open Graph Protocol Meta Tags -->
+    <meta property="og:title" content="Timezone Clocks">
+    <meta property="og:description" content="Explore and compare time zones across the world">
+    <meta property="og:type" content="website">
+    <meta id="ogImageUrl" property="og:image" content="">
+
+    <!-- External Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/luxon/3.4.3/luxon.min.js"></script>
+    <script src="js/timezones.js"></script>
+    <script src="js/clock-utils.js"></script>
+    <script src="js/app.js"></script>
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>Timezone Clocks</h1>
+            <button class="dark-mode-toggle" onclick="App.toggleDarkMode()">Toggle Dark Mode</button>
+        </header>
+
+        <main>
+            <div class="settings-container">
+                <div class="settings-grid">
+                    <label for="time">Time:</label>
+                    <input type="text" id="time" placeholder="YYYY-MM-DDTHH:mm (e.g., 2024-02-19T14:30)"
+                        pattern="^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$">
+
+                    <label for="sourceTz">Source Timezone:</label>
+                    <select id="sourceTz"></select>
+
+                    <label>Target Timezones:</label>
+                    <div class="target-timezones">
+                        <select class="targetTz"></select>
+                        <select class="targetTz"></select>
+                        <select class="targetTz"></select>
+                        <select class="targetTz"></select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="image-container" id="clockImage">
+                <!-- Clock SVG will be dynamically inserted here -->
+            </div>
+
+            <div id="ogPreviewImage" style="display:none;">
+                <!-- Preview image for Open Graph Protocol -->
+            </div>
+
+            <div class="share-container">
+                <input type="text" id="shareUrl" readonly>
+                <button id="copyUrlBtn">Copy URL</button>
+                <button id="copyImageBtn">Copy Image</button>
+            </div>
+
+            <div id="previewUrl" style="display:none;"></div>
+        </main>
+
+        <footer>
+            <p>
+                Copyright © 2025
+                Timezone Clocks
+                |
+                <a href="https://github.com/godajaiko21/timezone-clocks" target="_blank"
+                    rel="noopener noreferrer">GitHub</a>
+            </p>
+        </footer>
+    </div>
+</body>
+
+</html>

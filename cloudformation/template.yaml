@@ -1,0 +1,136 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Timezone Clocks - Static website for displaying time across multiple time zones
+
+Parameters:
+  GitHubOrg:
+    Type: String
+    Default: godajaiko21
+    Description: GitHub organization/user name
+  
+  RepositoryName:
+    Type: String
+    Default: timezone-clocks
+    Description: GitHub repository name
+
+Resources:
+  TimezoneClocksWebsiteBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub 'timezone-clocks-web-${AWS::AccountId}-${AWS::Region}'
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+
+  TimezoneClocksBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref TimezoneClocksWebsiteBucket
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: cloudfront.amazonaws.com
+            Action: s3:GetObject
+            Resource: !Sub '${TimezoneClocksWebsiteBucket.Arn}/*'
+            Condition:
+              StringEquals:
+                AWS:SourceArn: !Sub 'arn:aws:cloudfront::${AWS::AccountId}:distribution/${TimezoneClocksCloudFront}'
+
+  TimezoneClocksCloudFront:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Comment: "Timezone Clocks Web Distribution"
+        Enabled: true
+        DefaultRootObject: index.html
+        Origins:
+          - DomainName: !GetAtt TimezoneClocksWebsiteBucket.RegionalDomainName
+            Id: S3Origin
+            S3OriginConfig:
+              OriginAccessIdentity: ''
+            OriginAccessControlId: !GetAtt TimezoneClocksOAC.Id
+        DefaultCacheBehavior:
+          TargetOriginId: S3Origin
+          ViewerProtocolPolicy: redirect-to-https
+          CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6  # CachingOptimized
+          Compress: true
+        ViewerCertificate:
+          CloudFrontDefaultCertificate: true
+
+  TimezoneClocksOAC:
+    Type: AWS::CloudFront::OriginAccessControl
+    Properties:
+      OriginAccessControlConfig:
+        Name: "timezone-clocks-oac"
+        OriginAccessControlOriginType: s3
+        SigningBehavior: always
+        SigningProtocol: sigv4
+
+  GitHubOIDCProvider:
+    Type: AWS::IAM::OIDCProvider
+    Properties:
+      Url: https://token.actions.githubusercontent.com
+      ClientIdList: 
+        - sts.amazonaws.com
+      ThumbprintList:
+        - 6938fd4d98bab03faadb97b34396831e3780aea1
+        - 1c58a3a8518e8759bf075b76b750d4f2df264fcd
+
+  GitHubActionsRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub ${RepositoryName}-github-actions-role
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Federated: !GetAtt GitHubOIDCProvider.Arn
+            Action: sts:AssumeRoleWithWebIdentity
+            Condition:
+              StringLike:
+                token.actions.githubusercontent.com:sub: !Sub repo:${GitHubOrg}/${RepositoryName}:*
+              StringEquals:
+                token.actions.githubusercontent.com:aud: sts.amazonaws.com
+
+  GitHubActionsPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: !Sub ${RepositoryName}-github-actions-policy
+      Roles:
+        - !Ref GitHubActionsRole
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action:
+              - s3:PutObject
+              - s3:GetObject
+              - s3:ListBucket
+              - s3:DeleteObject
+            Resource:
+              - !GetAtt TimezoneClocksWebsiteBucket.Arn
+              - !Sub ${TimezoneClocksWebsiteBucket.Arn}/*
+          - Effect: Allow
+            Action:
+              - cloudfront:CreateInvalidation
+              - cloudfront:GetInvalidation
+              - cloudfront:ListInvalidations
+            Resource: !Sub arn:aws:cloudfront::${AWS::AccountId}:distribution/${TimezoneClocksCloudFront}
+
+Outputs:
+  TimezoneClocksWebUrl:
+    Description: "Timezone Clocks web interface URL"
+    Value: !Sub "https://${TimezoneClocksCloudFront.DomainName}"
+  TimezoneClocksWebsiteBucket:
+    Description: "S3 bucket for web hosting"
+    Value: !Ref TimezoneClocksWebsiteBucket
+  GitHubActionsRoleArn:
+    Description: "ARN of the IAM Role for GitHub Actions"
+    Value: !GetAtt GitHubActionsRole.Arn
+  CloudFrontDistributionId:
+    Description: "CloudFront Distribution ID"
+    Value: !Ref TimezoneClocksCloudFront

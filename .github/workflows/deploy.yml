@@ -1,0 +1,40 @@
+name: Deploy
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    permissions:
+      id-token: write
+      contents: read
+    
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+        aws-region: ${{ secrets.AWS_REGION }}
+
+    - name: Deploy to S3
+      run: |
+        aws s3 sync . s3://${{ secrets.AWS_S3_BUCKET }} \
+          --exclude ".git/*" \
+          --exclude ".github/*" \
+          --exclude "node_modules/*" \
+          --exclude "*.sh" \
+          --exclude "*.md" \
+          --exclude "package*.json" \
+          --cache-control "max-age=0, no-cache, no-store, must-revalidate"
+
+    - name: Create CloudFront invalidation
+      run: |
+        aws cloudfront create-invalidation \
+          --distribution-id ${{ secrets.AWS_CLOUDFRONT_DISTRIBUTION_ID }} \
+          --paths "/*"
