@@ -69,8 +69,12 @@ Resources:
         SigningBehavior: always
         SigningProtocol: sigv4
 
+  # アカウントで 1 つの GitHub の OIDC プロバイダ。ほかのリポジトリ（keiba-analyst・aws-common・ios-voice-to-kb など）も使っているので、
+  # このスタックを消しても・作り直しても消さない
   GitHubOIDCProvider:
     Type: AWS::IAM::OIDCProvider
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
     Properties:
       Url: https://token.actions.githubusercontent.com
       ClientIdList: 
@@ -91,9 +95,9 @@ Resources:
               Federated: !GetAtt GitHubOIDCProvider.Arn
             Action: sts:AssumeRoleWithWebIdentity
             Condition:
-              StringLike:
-                token.actions.githubusercontent.com:sub: !Sub repo:${GitHubOrg}/${RepositoryName}:*
               StringEquals:
+                # main からの実行（deploy.yml の push と workflow_dispatch）だけ。ほかのブランチ・PR からは入れない
+                token.actions.githubusercontent.com:sub: !Sub repo:${GitHubOrg}/${RepositoryName}:ref:refs/heads/main
                 token.actions.githubusercontent.com:aud: sts.amazonaws.com
 
   GitHubActionsPolicy:
